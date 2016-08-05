@@ -34,14 +34,14 @@ bot.startRTM((error /* , _bot, _payload */) => {
 });
 
 /* ### SET UP SLACKUP INTERVAL ### */
-let gaveTodaysSlackup = false;
+let gaveTodaysSlackup = (new Date()).getHours() > 19; // give slackup immediately if bot is started between 7pm and 8pm
 function checkGiveSlackup() {
   const theTime = new Date();
   if (theTime.getDay() === 0 || theTime.getDay() === 6) {
     return; // don't slackup on weekends
   }
 
-  if (theTime.getHours() !== 19 || theTime.getMinutes() !== 0) {
+  if (theTime.getHours() < 19) {
     gaveTodaysSlackup = false;
     return;
   }
@@ -73,7 +73,14 @@ controller.hears(['.*'], ['direct_message'], (_bot, message) => {
         Message.private(message.user, 'I\'m only for members of #gk-slackup!');
         return;
       }
-      if ((new Date()).getHours() >= 19) {
+
+      const theTime = new Date();
+      if (theTime.getDay() === 0 || theTime.getDay() === 6) {
+        Message.private(message.user, 'There\'s no slackup on the weekends. Let me know on Monday.');
+        return;
+      }
+
+      if (gaveTodaysSlackup) {
         Message.private(message.user, 'Today\'s slackup already happened. Let me know tomorrow.');
         return;
       }
