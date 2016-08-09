@@ -6,6 +6,7 @@ module.exports = (controller, bot, SLACKUP_CHANNEL_ID) => {
   const Database = {
     getTodaysUserMessages: () =>
       controller.storage.channels.getAsync(SLACKUP_CHANNEL_ID)
+        .catch(() => ({}))
         .then((channelRecord) => {
           const today = moment().date();
           const {
@@ -22,6 +23,7 @@ module.exports = (controller, bot, SLACKUP_CHANNEL_ID) => {
 
     getUserReminders: () =>
       controller.storage.channels.getAsync(SLACKUP_CHANNEL_ID)
+        .catch(() => ({}))
         .then(({ userReminders }) => (userReminders || {})),
 
     getSlackupMessage: () =>
@@ -76,6 +78,7 @@ module.exports = (controller, bot, SLACKUP_CHANNEL_ID) => {
       const today = moment().date();
 
       return controller.storage.channels.getAsync(SLACKUP_CHANNEL_ID)
+        .catch(() => ({}))
         .then((channelRecord) => {
           const {
             userMessages: previousMessages = {}
@@ -99,6 +102,7 @@ module.exports = (controller, bot, SLACKUP_CHANNEL_ID) => {
      */
     updateChannelRecord: (newData) =>
       controller.storage.channels.getAsync(SLACKUP_CHANNEL_ID)
+        .catch(() => ({}))
         .then((record) => {
           _.mergeWith(record, newData, (objValue, srcValue) => {
             if (srcValue === undefined) {
@@ -123,6 +127,7 @@ module.exports = (controller, bot, SLACKUP_CHANNEL_ID) => {
         .then((channelInfo) => {
           if (skipKnownMembers) {
             return controller.storage.channels.getAsync(SLACKUP_CHANNEL_ID)
+              .catch(() => ({}))
               .then(({ userInfo }) =>
                 _.filter(channelInfo.channel.members, (value, key) => !_.keys(userInfo).includes(key))
               );
