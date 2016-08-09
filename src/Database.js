@@ -1,33 +1,79 @@
+const Promise = require('bluebird');
 const _ = require('lodash');
+const moment = require('moment');
 
 module.exports = (controller, bot, SLACKUP_CHANNEL_ID) => {
   const Database = {
-    getAllUserMessages: () =>
+    getTodaysUserMessages: () =>
       controller.storage.channels.getAsync(SLACKUP_CHANNEL_ID)
         .then((channelRecord) => {
-          const today = (new Date()).getDate();
-
+          const today = moment().date();
           const {
             userInfo = {},
             userMessages = {}
           } = channelRecord;
           userMessages[today] = userMessages[today] || {};
 
-          const usersWithInfoAndMessage = _(userMessages[today])
-            .keys().filter((user) => !!userInfo[user]).value(); // eslint-disable-line newline-per-chained-call
-
-          return _.reduce(userMessages[today], (result, text, user) => { // eslint-disable-line arrow-body-style
-            return _.includes(usersWithInfoAndMessage, user) ?
-              `${result}${result ? '\n' : ''} • ${userInfo[user].name}: ${text}` : result;
-          }, '');
+          return _(userMessages[today])
+            .pickBy((message, user) => !!userInfo[user])
+            .mapValues((message, user) => ({ username: userInfo[user].name, text: message }))
+            .value();
         }),
 
+    getUserReminders: () =>
+      controller.storage.channels.getAsync(SLACKUP_CHANNEL_ID)
+        .then(({ userReminders }) => (userReminders || {})),
+
     getSlackupMessage: () =>
-      Database.getAllUserMessages()
-        .then((messages) => `Here's the slackup messages I got today: \n${messages}`),
+      Database.getTodaysUserMessages()
+        .then((messages) => {
+          const messageList = _.reduce(messages, (result, { username, text }) =>
+              `${result}${result ? '\n' : ''} • ${username}: ${text}`
+          , '');
+
+          return `Here's the slackup messages I got today: \n${messageList}`;
+        }),
+
+    saveUserReminder: (user, timeString) =>
+      Promise.resolve()
+        .then(() => {
+          if (!timeString) {
+            return null;
+          }
+
+          let [hours, minutes] = _.map(timeString.split(':'), (v) => parseInt(v, 10));
+          if (_.isNaN(hours) || _.isNaN(minutes) || hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
+            return Promise.reject('I couldn\'t figure out that time. Use 24-hour `HH:MM` format.');
+          }
+          if (hours >= 19) {
+            return Promise.reject('I can\'t remind you that late - that\'s after the slackup time!');
+          }
+
+          hours = '' + hours; // eslint-disable-line prefer-template
+          minutes = '' + minutes; // eslint-disable-line prefer-template
+          while (hours.length < 2) {
+            hours = `0${hours}`;
+          }
+          while (minutes.length < 2) {
+            minutes = `0${minutes}`;
+          }
+
+          return moment(`2000-01-01 ${hours}:${minutes}`);
+        })
+        .then((parsedTime) =>
+          Database.updateChannelRecord({
+            userReminders: {
+              [user]: {
+                lastReminder: moment().toISOString(),
+                timeOfDay: parsedTime && parsedTime.toISOString()
+              }
+            }
+          })
+          .then(() => parsedTime)
+        ),
 
     saveUserMessage: (user, text) => {
-      const today = (new Date()).getDate();
+      const today = moment().date();
 
       return controller.storage.channels.getAsync(SLACKUP_CHANNEL_ID)
         .then((channelRecord) => {
@@ -37,7 +83,7 @@ module.exports = (controller, bot, SLACKUP_CHANNEL_ID) => {
           previousMessages[today] = previousMessages[today] || {};
 
           // Delete messages from previous days
-          const userMessages = _.pick(previousMessages, today);
+          const userMessages = _.mapValues(previousMessages, (v, k) => (parseInt(k, 10) === today ? v : null));
 
           userMessages[today][user] = text;
 
@@ -46,10 +92,22 @@ module.exports = (controller, bot, SLACKUP_CHANNEL_ID) => {
         .then(({ userMessages }) => userMessages);
     },
 
+    /**
+     * @param {Object} newData An object that will be merged with the existing slackup channel data.
+     *                         Recursively, no defined properties in newData ought to resolve to `undefined`;
+     *                         these will be treated as `null`, which is the "explicitly update to not a value" value.
+     */
     updateChannelRecord: (newData) =>
       controller.storage.channels.getAsync(SLACKUP_CHANNEL_ID)
         .then((record) => {
-          _.merge(record, newData);
+          _.mergeWith(record, newData, (objValue, srcValue) => {
+            if (srcValue === undefined) {
+              // source values should not be undefined, but if that happens then
+              // map them to null to properly "un-set" the key
+              return null;
+            }
+            return undefined; // otherwise default to _.merge behavior
+          });
           return controller.storage.channels.saveAsync(record)
             .then(() => record);
         }),

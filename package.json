@@ -6,7 +6,8 @@
   "dependencies": {
     "bluebird": "^3.1.1",
     "botkit": "^0.2.2",
-    "lodash": "^4.14.1"
+    "lodash": "^4.14.1",
+    "moment": "^2.14.1"
   },
   "devDependencies": {
     "eslint": "^2.13.1",
@@ -14,6 +15,10 @@
     "eslint-plugin-import": "^1.9.2",
     "eslint-plugin-react": "^5.2.2",
     "eslint-plugin-jsx-a11y": "^1.5.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Mr-Wallet/gitkraken-slackbot.git"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
