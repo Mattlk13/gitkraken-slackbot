@@ -89,13 +89,13 @@ setInterval(checkGiveSlackup, 20000);
 // NOTE that order of definition determines priority. The first `hears` that was defined on the controller which matches
 //      the chat message in question will be the only one that runs its callback.
 
-controller.hears([/^help$/i], ['direct_message'], (/* _bot, */ message) => {
+controller.hears([/^help$/i], ['direct_message'], (_bot, message) => {
   Message.private(message.user,
     'Besides this `help` command, I know the following commands:\n' +
     ' • `remindMeAt [time]`: provide a time in 24-hour `HH:MM` format and each day you haven\'t sent me a slackup' +
     ' message by that time, I\'ll send you a reminder. Use with a blank time to stop getting reminders.\n' +
     '*Anything else will be considered a slackup message.* I can store 1 message from you at a time, so whatever you' +
-    'sent last will be the message I use. At 7pm each day I will post all the slackup messages I have to #gk-slackup.'
+    ' sent last will be the message I use. At 7pm each day I will post all the slackup messages I have to #gk-slackup.'
   );
 });
 
