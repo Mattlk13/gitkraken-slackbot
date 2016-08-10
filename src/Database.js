@@ -112,6 +112,9 @@ module.exports = (controller, bot, SLACKUP_CHANNEL_ID) => {
             }
             return undefined; // otherwise default to _.merge behavior
           });
+
+          record.id = SLACKUP_CHANNEL_ID; // eslint-disable-line no-param-reassign
+
           return controller.storage.channels.saveAsync(record)
             .then(() => record);
         }),

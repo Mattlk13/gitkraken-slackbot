@@ -91,7 +91,7 @@ setInterval(checkGiveSlackup, 20000);
 
 controller.hears([/^help$/i], ['direct_message'], (/* _bot, */ message) => {
   Message.private(message.user,
-    'Besides this help command, I know the following commands:\n' +
+    'Besides this `help` command, I know the following commands:\n' +
     ' • `remindMeAt [time]`: provide a time in 24-hour `HH:MM` format and each day you haven\'t sent me a slackup' +
     ' message by that time, I\'ll send you a reminder. Use with a blank time to stop getting reminders.\n' +
     '*Anything else will be considered a slackup message.* I can store 1 message from you at a time, so whatever you' +
