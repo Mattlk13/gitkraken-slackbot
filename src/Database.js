@@ -11,7 +11,12 @@ module.exports = (controller, bot, SLACKUP_CHANNEL_ID, LOGGING_LEVEL = 1) => {
     getTodaysUserMessages: () => {
       Util.log('Database', 'getTodaysUserMessages called.', VERBOSE_LOGGING);
       controller.storage.channels.getAsync(SLACKUP_CHANNEL_ID)
-        .catch(() => ({}))
+        .catch((reason) => {
+          Util.log('Database',
+            'getTodaysUserMessages: Could not load channel record, continuing with empty data. Reason follows:');
+          Util.log('Database', reason);
+          return {};
+        })
         .then((channelRecord) => {
           const today = moment().date();
           const {
@@ -30,7 +35,12 @@ module.exports = (controller, bot, SLACKUP_CHANNEL_ID, LOGGING_LEVEL = 1) => {
     getUserReminders: () => {
       Util.log('Database', 'getUserReminders called.', VERBOSE_LOGGING);
       controller.storage.channels.getAsync(SLACKUP_CHANNEL_ID)
-        .catch(() => ({}))
+        .catch((reason) => {
+          Util.log('Database',
+            'getUserReminders: Could not load channel record, continuing with empty data. Reason follows:');
+          Util.log('Database', reason);
+          return {};
+        })
         .then(({ userReminders }) => (userReminders || {}));
     },
 
@@ -91,7 +101,12 @@ module.exports = (controller, bot, SLACKUP_CHANNEL_ID, LOGGING_LEVEL = 1) => {
       const today = moment().date();
 
       return controller.storage.channels.getAsync(SLACKUP_CHANNEL_ID)
-        .catch(() => ({}))
+        .catch((reason) => {
+          Util.log('Database',
+            'saveUserMessage: Could not load channel record, continuing with empty data. Reason follows:');
+          Util.log('Database', reason);
+          return {};
+        })
         .then((channelRecord) => {
           const {
             userMessages: previousMessages = {}
@@ -116,7 +131,12 @@ module.exports = (controller, bot, SLACKUP_CHANNEL_ID, LOGGING_LEVEL = 1) => {
     updateChannelRecord: (newData) => {
       Util.log('Database', 'updateChannelRecord called.', VERBOSE_LOGGING);
       return controller.storage.channels.getAsync(SLACKUP_CHANNEL_ID)
-        .catch(() => ({}))
+        .catch((reason) => {
+          Util.log('Database',
+            'updateChannelRecord: Could not load channel record, continuing with empty data. Reason follows:');
+          Util.log('Database', reason);
+          return {};
+        })
         .then((record) => {
           Util.log('updateChannelRecord', `saving data: ${JSON.stringify(_.keys(newData))}`, VERBOSE_LOGGING);
           _.mergeWith(record, newData, (objValue, srcValue) => {
@@ -147,7 +167,12 @@ module.exports = (controller, bot, SLACKUP_CHANNEL_ID, LOGGING_LEVEL = 1) => {
         .then((channelInfo) => {
           if (skipKnownMembers) {
             return controller.storage.channels.getAsync(SLACKUP_CHANNEL_ID)
-              .catch(() => ({}))
+              .catch((reason) => {
+                Util.log('Database',
+                  'updateChannelMembers: Could not load channel record, continuing with empty data. Reason follows:');
+                Util.log('Database', reason);
+                return {};
+              })
               .then(({ userInfo }) =>
                 _.filter(channelInfo.channel.members, (value, key) => !_.keys(userInfo).includes(key))
               );
