@@ -53,13 +53,21 @@ function checkGiveSlackup() {
         const usersNeedingReminder = _(userReminders)
           .pickBy((reminder, user) => !userMessages[user])
           .pickBy(({ lastReminder: _lastReminder, timeOfDay: _timeOfDay }) => {
-            const lastReminder = moment(_lastReminder);
             const timeOfDay = moment(_timeOfDay);
+            const lastReminder = moment(_lastReminder);
+            const timeUserWantsReminder = moment([
+              theTime.year(),
+              theTime.month(),
+              theTime.date(),
+              timeOfDay.hour(),
+              timeOfDay.minute()
+            ]);
+
             // Send a reminder if we've hit or passed the reminder time and EITHER:
             //  - We haven't sent a reminder today
             //  - The reminder we sent was earlier than the reminder time (the user got a reminder then set a new one)
-            return theTime.isSameOrAfter(timeOfDay, 'minute') &&
-              (!lastReminder.isSame(theTime, 'day') || lastReminder.isBefore(timeOfDay, 'minute'));
+            return theTime.isSameOrAfter(timeUserWantsReminder, 'minute') &&
+              (!lastReminder.isSame(theTime, 'day') || lastReminder.isBefore(timeUserWantsReminder, 'minute'));
           })
           .keys()
           .value();
