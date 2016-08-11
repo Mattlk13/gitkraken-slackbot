@@ -2,9 +2,14 @@ const Promise = require('bluebird');
 const _ = require('lodash');
 const moment = require('moment');
 
-module.exports = (controller, bot, SLACKUP_CHANNEL_ID) => {
+const VERBOSE_LOGGING = 2;
+
+module.exports = (controller, bot, SLACKUP_CHANNEL_ID, LOGGING_LEVEL = 1) => {
+  const Util = require('./Util.js')(LOGGING_LEVEL); // eslint-disable-line global-require
+
   const Database = {
-    getTodaysUserMessages: () =>
+    getTodaysUserMessages: () => {
+      Util.log('Database', 'getTodaysUserMessages called.', VERBOSE_LOGGING);
       controller.storage.channels.getAsync(SLACKUP_CHANNEL_ID)
         .catch(() => ({}))
         .then((channelRecord) => {
@@ -19,25 +24,31 @@ module.exports = (controller, bot, SLACKUP_CHANNEL_ID) => {
             .pickBy((message, user) => !!userInfo[user])
             .mapValues((message, user) => ({ username: userInfo[user].name, text: message }))
             .value();
-        }),
+        });
+    },
 
-    getUserReminders: () =>
+    getUserReminders: () => {
+      Util.log('Database', 'getUserReminders called.', VERBOSE_LOGGING);
       controller.storage.channels.getAsync(SLACKUP_CHANNEL_ID)
         .catch(() => ({}))
-        .then(({ userReminders }) => (userReminders || {})),
+        .then(({ userReminders }) => (userReminders || {}));
+    },
 
-    getSlackupMessage: () =>
-      Database.getTodaysUserMessages()
+    getSlackupMessage: () => {
+      Util.log('Database', 'getSlackupMessage called.', VERBOSE_LOGGING);
+      return Database.getTodaysUserMessages()
         .then((messages) => {
           const messageList = _.reduce(messages, (result, { username, text }) =>
               `${result}${result ? '\n' : ''} • ${username}: ${text}`
           , '');
 
           return `Here's the slackup messages I got today: \n${messageList}`;
-        }),
+        });
+    },
 
-    saveUserReminder: (user, timeString) =>
-      Promise.resolve()
+    saveUserReminder: (user, timeString) => {
+      Util.log('Database', 'saveUserReminder called.', VERBOSE_LOGGING);
+      return Promise.resolve()
         .then(() => {
           if (!timeString) {
             return null;
@@ -72,9 +83,11 @@ module.exports = (controller, bot, SLACKUP_CHANNEL_ID) => {
             }
           })
           .then(() => parsedTime)
-        ),
+        );
+    },
 
     saveUserMessage: (user, text) => {
+      Util.log('Database', 'saveUserMessage called.', VERBOSE_LOGGING);
       const today = moment().date();
 
       return controller.storage.channels.getAsync(SLACKUP_CHANNEL_ID)
@@ -100,10 +113,12 @@ module.exports = (controller, bot, SLACKUP_CHANNEL_ID) => {
      *                         Recursively, no defined properties in newData ought to resolve to `undefined`;
      *                         these will be treated as `null`, which is the "explicitly update to not a value" value.
      */
-    updateChannelRecord: (newData) =>
-      controller.storage.channels.getAsync(SLACKUP_CHANNEL_ID)
+    updateChannelRecord: (newData) => {
+      Util.log('Database', 'updateChannelRecord called.', VERBOSE_LOGGING);
+      return controller.storage.channels.getAsync(SLACKUP_CHANNEL_ID)
         .catch(() => ({}))
         .then((record) => {
+          Util.log('updateChannelRecord', `saving data: ${JSON.stringify(_.keys(newData))}`, VERBOSE_LOGGING);
           _.mergeWith(record, newData, (objValue, srcValue) => {
             if (srcValue === undefined) {
               // source values should not be undefined, but if that happens then
@@ -117,7 +132,8 @@ module.exports = (controller, bot, SLACKUP_CHANNEL_ID) => {
 
           return controller.storage.channels.saveAsync(record)
             .then(() => record);
-        }),
+        });
+    },
 
   /**
    * @param {Boolean} skipKnownMembers An optimization to not hammer the api with user info requests.
@@ -125,8 +141,9 @@ module.exports = (controller, bot, SLACKUP_CHANNEL_ID) => {
    *                                   teeny tiny UX bugs by not detecting user info changes after the bot is loaded.
    *                                   This is an internal tool so teeny tiny bugs aren't a big deal.
    */
-    updateChannelMembers: (skipKnownMembers) =>
-      bot.api.channels.infoAsync({ channel: SLACKUP_CHANNEL_ID })
+    updateChannelMembers: (skipKnownMembers) => {
+      Util.log('Database', `updateChannelMembers called, skipKnownMembers: ${skipKnownMembers}`, VERBOSE_LOGGING);
+      return bot.api.channels.infoAsync({ channel: SLACKUP_CHANNEL_ID })
         .then((channelInfo) => {
           if (skipKnownMembers) {
             return controller.storage.channels.getAsync(SLACKUP_CHANNEL_ID)
@@ -153,7 +170,8 @@ module.exports = (controller, bot, SLACKUP_CHANNEL_ID) => {
 
           return Database.updateChannelRecord({ userInfo });
         })
-        .then(({ userInfo }) => userInfo)
+        .then(({ userInfo }) => userInfo);
+    }
   };
 
   return Database;
