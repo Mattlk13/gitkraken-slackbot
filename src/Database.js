@@ -10,7 +10,7 @@ module.exports = (controller, bot, SLACKUP_CHANNEL_ID, LOGGING_LEVEL = 1) => {
   const Database = {
     getTodaysUserMessages: () => {
       Util.log('Database', 'getTodaysUserMessages called.', VERBOSE_LOGGING);
-      controller.storage.channels.getAsync(SLACKUP_CHANNEL_ID)
+      return controller.storage.channels.getAsync(SLACKUP_CHANNEL_ID)
         .catch((reason) => {
           Util.log('Database',
             'getTodaysUserMessages: Could not load channel record, continuing with empty data. Reason follows:');
@@ -34,14 +34,13 @@ module.exports = (controller, bot, SLACKUP_CHANNEL_ID, LOGGING_LEVEL = 1) => {
 
     getUserReminders: () => {
       Util.log('Database', 'getUserReminders called.', VERBOSE_LOGGING);
-      controller.storage.channels.getAsync(SLACKUP_CHANNEL_ID)
+      return controller.storage.channels.getAsync(SLACKUP_CHANNEL_ID)
         .catch((reason) => {
           Util.log('Database',
             'getUserReminders: Could not load channel record, continuing with empty data. Reason follows:', 0);
           Util.log('Database', reason, 0);
           return {};
         })
-        .then((x) => {Util.log('Database', JSON.stringify(x)); return x;})
         .then(({ userReminders }) => (userReminders || {}));
     },
 
