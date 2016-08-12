@@ -75,6 +75,10 @@ function checkGiveSlackup() {
           .keys()
           .value();
 
+        if (_.isEmpty(usersNeedingReminder)) {
+          return;
+        }
+
         _.forEach(usersNeedingReminder, (user) => {
           Util.log('reminder', `Sending slackup reminder to user ${user}`);
           Message.private(user, 'Psst! You still haven\'t given me a slackup message!');
