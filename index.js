@@ -7,6 +7,7 @@ const BOT_TOKEN = require('./token.js');
 const SLACKUP_CHANNEL_ID = 'C0P38P755';
 const LOGGING_LEVEL = 1;
 const VERBOSE_LOGGING = 2;
+const SILLY_LOGGING = 3;
 
 
 /* ### MESSY GLOBAL VARIABLES ### */
@@ -53,9 +54,11 @@ function checkGiveSlackup() {
     gaveTodaysSlackup = false;
     Promise.all([Database.getTodaysUserMessages(), Database.getUserReminders()])
       .then(([userMessages, userReminders]) => {
+        Util.log('reminder', `User messages exist for the following users: ${_.keys(userMessages)}.`, SILLY_LOGGING);
+        Util.log('reminder', `User reminders exist for the following users: ${_.keys(userReminders)}.`, SILLY_LOGGING);
         const usersNeedingReminder = _(userReminders)
           .pickBy((reminder, user) => !userMessages[user])
-          .pickBy(({ lastReminder: _lastReminder, timeOfDay: _timeOfDay }) => {
+          .pickBy(({ lastReminder: _lastReminder, timeOfDay: _timeOfDay }, user) => {
             const timeOfDay = moment(_timeOfDay);
             const lastReminder = moment(_lastReminder);
             const timeUserWantsReminder = moment([
@@ -65,6 +68,9 @@ function checkGiveSlackup() {
               timeOfDay.hour(),
               timeOfDay.minute()
             ]);
+
+            Util.log('reminder', `User ${user} wants a reminder at ${timeUserWantsReminder.toString()}.`
+              + ` They last received a reminder at ${lastReminder.toString()}`, SILLY_LOGGING);
 
             // Send a reminder if we've hit or passed the reminder time and EITHER:
             //  - We haven't sent a reminder today

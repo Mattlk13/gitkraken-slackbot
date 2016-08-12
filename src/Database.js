@@ -37,10 +37,11 @@ module.exports = (controller, bot, SLACKUP_CHANNEL_ID, LOGGING_LEVEL = 1) => {
       controller.storage.channels.getAsync(SLACKUP_CHANNEL_ID)
         .catch((reason) => {
           Util.log('Database',
-            'getUserReminders: Could not load channel record, continuing with empty data. Reason follows:');
-          Util.log('Database', reason);
+            'getUserReminders: Could not load channel record, continuing with empty data. Reason follows:', 0);
+          Util.log('Database', reason, 0);
           return {};
         })
+        .then((x) => {Util.log('Database', JSON.stringify(x)); return x;})
         .then(({ userReminders }) => (userReminders || {}));
     },
 
@@ -83,8 +84,9 @@ module.exports = (controller, bot, SLACKUP_CHANNEL_ID, LOGGING_LEVEL = 1) => {
 
           return moment(`2000-01-01 ${hours}:${minutes}`);
         })
-        .then((parsedTime) =>
-          Database.updateChannelRecord({
+        .then((parsedTime) => {
+          Util.log('Database', `saving user ${user} reminder with time: ${parsedTime.toISOString()}`, VERBOSE_LOGGING);
+          return Database.updateChannelRecord({
             userReminders: {
               [user]: {
                 lastReminder: moment().toISOString(),
@@ -92,8 +94,8 @@ module.exports = (controller, bot, SLACKUP_CHANNEL_ID, LOGGING_LEVEL = 1) => {
               }
             }
           })
-          .then(() => parsedTime)
-        );
+          .then(() => parsedTime);
+        });
     },
 
     saveUserMessage: (user, text) => {
