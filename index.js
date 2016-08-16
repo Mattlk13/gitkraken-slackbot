@@ -16,6 +16,7 @@ const controller = Botkit.slackbot({
 });
 
 const bot = controller.spawn({
+  retry: 100,
   token: BOT_TOKEN
 });
 
