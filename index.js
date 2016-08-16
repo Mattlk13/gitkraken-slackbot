@@ -178,7 +178,7 @@ controller.hears([/.+/], ['direct_message'], (_bot, message) => {
 
       const { user } = message;
       const username = userInfo[user].name;
-      Util.log('unmatched', `User ${user} (${username}) set their slackup message to: ${message}`);
+      Util.log('unmatched', `User ${user} (${username}) set their slackup message to: ${message.text}`);
       Database.saveUserMessage(message.user, message.text)
         .then(() => Message.private(message.user, 'Okay! I\'ll make that your message for the next slackup (7pm).'));
     });
