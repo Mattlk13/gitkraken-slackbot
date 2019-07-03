@@ -7,7 +7,8 @@
     "bluebird": "^3.1.1",
     "botkit": "^0.2.2",
     "lodash": "^4.14.1",
-    "moment": "^2.14.1"
+    "moment": "^2.14.1",
+    "snyk": "^1.189.0"
   },
   "devDependencies": {
     "eslint": "^2.13.1",
@@ -21,8 +22,11 @@
     "url": "https://github.com/Mr-Wallet/gitkraken-slackbot.git"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "snyk-protect": "snyk protect",
+    "prepublish": "npm run snyk-protect"
   },
   "author": "Jordan Wallet <jjwallet@gmail.com>",
-  "license": "MIT"
+  "license": "MIT",
+  "snyk": true
 }
